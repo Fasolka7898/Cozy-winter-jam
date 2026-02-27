@@ -75,37 +75,37 @@ namespace PlayerMovement
         [SerializeField] private bool showVictoryMenu = true;
 
         // Components
-        private CharacterController _controller;
-        private PlayerInput _playerInput;
-        private Camera _playerCamera;
+        private CharacterController controller;
+        private PlayerInput playerInput;
+        private Camera playerCamera;
 
         // Movement variables
-        private Vector2 _moveInput;
-        private Vector2 _lookInput;
-        private Vector3 _playerVelocity;
-        private float _cameraPitch;
-        private bool _isGrounded;
-        private bool _isRunning;
+        private Vector2 moveInput;
+        private Vector2 lookInput;
+        private Vector3 playerVelocity;
+        private float cameraPitch;
+        private bool isGrounded;
+        private bool isRunning;
 
         // Footstep variables
-        private float _stepTimer;
-        private int _lastFootstepIndex = -1;
+        private float stepTimer;
+        private int lastFootstepIndex = -1;
 
         // Snowball variables
-        private int _currentSnowballs;
-        private float _nextThrowTime;
-        private AudioSource _throwAudioSource;
+        private int currentSnowballs;
+        private float nextThrowTime;
+        private AudioSource throwAudioSource;
 
         // Camera bobbing variables
-        private float _bobbingTimer;
-        private float _currentBobbingSpeed;
-        private float _currentBobbingAmount;
-        private Vector3 _initialCameraPosition;
-        private Vector3 _cameraTargetPosition;
-        private float _breathingTimer;
+        private float bobbingTimer;
+        private float currentBobbingSpeed;
+        private float currentBobbingAmount;
+        private Vector3 initialCameraPosition;
+        private Vector3 cameraTargetPosition;
+        private float breathingTimer;
 
         // Victory flag
-        private bool _victoryAchieved = false;
+        private bool victoryAchieved = false;
 
         // Events
         public delegate void ScoreChangedHandler(int newScore);
@@ -129,21 +129,21 @@ namespace PlayerMovement
 
         private float CurrentSpeed
         {
-            get { return _isRunning ? runSpeed : walkSpeed; }
+            get { return isRunning ? runSpeed : walkSpeed; }
         }
 
         private float CurrentStepInterval
         {
-            get { return _isRunning ? runStepInterval : walkStepInterval; }
+            get { return isRunning ? runStepInterval : walkStepInterval; }
         }
 
         private void Awake()
         {
-            _controller = GetComponent<CharacterController>();
-            _playerInput = GetComponent<PlayerInput>();
-            _playerCamera = GetComponentInChildren<Camera>();
+            controller = GetComponent<CharacterController>();
+            playerInput = GetComponent<PlayerInput>();
+            playerCamera = GetComponentInChildren<Camera>();
 
-            if (_playerCamera == null)
+            if (playerCamera == null)
             {
                 Debug.LogError("No camera found as child of player! Please add a camera.");
             }
@@ -155,9 +155,9 @@ namespace PlayerMovement
             SetupInputCallbacks();
 
             // Camera bobbing initialization
-            if (_playerCamera != null)
+            if (playerCamera != null)
             {
-                _initialCameraPosition = _playerCamera.transform.localPosition;
+                initialCameraPosition = playerCamera.transform.localPosition;
             }
         }
 
@@ -180,16 +180,16 @@ namespace PlayerMovement
 
         private void SetupThrowAudio()
         {
-            _throwAudioSource = gameObject.AddComponent<AudioSource>();
-            _throwAudioSource.playOnAwake = false;
-            _throwAudioSource.loop = false;
-            _throwAudioSource.spatialBlend = 1f;
-            _throwAudioSource.volume = throwVolume;
+            throwAudioSource = gameObject.AddComponent<AudioSource>();
+            throwAudioSource.playOnAwake = false;
+            throwAudioSource.loop = false;
+            throwAudioSource.spatialBlend = 1f;
+            throwAudioSource.volume = throwVolume;
         }
 
         private void InitializeSnowballs()
         {
-            _currentSnowballs = maxSnowballs;
+            currentSnowballs = maxSnowballs;
         }
 
         private void Start()
@@ -203,9 +203,9 @@ namespace PlayerMovement
 
             if (throwPoint == null)
             {
-                if (_playerCamera != null)
+                if (playerCamera != null)
                 {
-                    throwPoint = _playerCamera.transform;
+                    throwPoint = playerCamera.transform;
                 }
                 else
                 {
@@ -228,33 +228,33 @@ namespace PlayerMovement
 
         private void SetupInputCallbacks()
         {
-            _playerInput.actions["Move"].performed += ctx => _moveInput = ctx.ReadValue<Vector2>();
-            _playerInput.actions["Move"].canceled += ctx => _moveInput = Vector2.zero;
+            playerInput.actions["Move"].performed += ctx => moveInput = ctx.ReadValue<Vector2>();
+            playerInput.actions["Move"].canceled += ctx => moveInput = Vector2.zero;
 
-            _playerInput.actions["Look"].performed += ctx => _lookInput = ctx.ReadValue<Vector2>();
-            _playerInput.actions["Look"].canceled += ctx => _lookInput = Vector2.zero;
+            playerInput.actions["Look"].performed += ctx => lookInput = ctx.ReadValue<Vector2>();
+            playerInput.actions["Look"].canceled += ctx => lookInput = Vector2.zero;
 
-            _playerInput.actions["Jump"].performed += OnJumpPerformed;
+            playerInput.actions["Jump"].performed += OnJumpPerformed;
 
-            _playerInput.actions["Run"].performed += ctx => _isRunning = true;
-            _playerInput.actions["Run"].canceled += ctx => _isRunning = false;
+            playerInput.actions["Run"].performed += ctx => isRunning = true;
+            playerInput.actions["Run"].canceled += ctx => isRunning = false;
 
-            _playerInput.actions["ToggleCursor"].performed += ctx => {
+            playerInput.actions["ToggleCursor"].performed += ctx => {
                 cursorLocked = !cursorLocked;
                 ApplyCursorState();
             };
 
-            _playerInput.actions["Throw"].performed += OnThrowPerformed;
+            playerInput.actions["Throw"].performed += OnThrowPerformed;
         }
 
         private void OnDestroy()
         {
-            if (_playerInput != null)
+            if (playerInput != null)
             {
-                _playerInput.actions["Move"].performed -= ctx => _moveInput = ctx.ReadValue<Vector2>();
-                _playerInput.actions["Move"].canceled -= ctx => _moveInput = Vector2.zero;
-                _playerInput.actions["Jump"].performed -= OnJumpPerformed;
-                _playerInput.actions["Throw"].performed -= OnThrowPerformed;
+                playerInput.actions["Move"].performed -= ctx => moveInput = ctx.ReadValue<Vector2>();
+                playerInput.actions["Move"].canceled -= ctx => moveInput = Vector2.zero;
+                playerInput.actions["Jump"].performed -= OnJumpPerformed;
+                playerInput.actions["Throw"].performed -= OnThrowPerformed;
             }
 
             // Очищаем события
@@ -282,7 +282,7 @@ namespace PlayerMovement
 
         private void CheckGround()
         {
-            _isGrounded = Physics.CheckSphere(
+            isGrounded = Physics.CheckSphere(
                 groundCheckTransform.position,
                 groundCheckRadius,
                 groundLayers,
@@ -292,43 +292,43 @@ namespace PlayerMovement
 
         private void ApplyGravity()
         {
-            _playerVelocity.y += gravity * Time.deltaTime;
+            playerVelocity.y += gravity * Time.deltaTime;
 
-            if (_isGrounded && _playerVelocity.y < 0)
+            if (isGrounded && playerVelocity.y < 0)
             {
-                _playerVelocity.y = -2f;
+                playerVelocity.y = -2f;
             }
 
-            _controller.Move(_playerVelocity * Time.deltaTime);
+            controller.Move(playerVelocity * Time.deltaTime);
         }
 
         private void MovePlayer()
         {
-            if (_moveInput == Vector2.zero) return;
+            if (moveInput == Vector2.zero) return;
 
-            var moveDirection = new Vector3(_moveInput.x, 0, _moveInput.y);
+            var moveDirection = new Vector3(moveInput.x, 0, moveInput.y);
             moveDirection = transform.TransformDirection(moveDirection);
 
-            _controller.Move(moveDirection * (CurrentSpeed * Time.deltaTime));
+            controller.Move(moveDirection * (CurrentSpeed * Time.deltaTime));
         }
 
         private void HandleFootsteps()
         {
-            bool isMoving = _moveInput != Vector2.zero && _isGrounded;
+            bool isMoving = moveInput != Vector2.zero && isGrounded;
 
             if (isMoving)
             {
-                _stepTimer -= Time.deltaTime;
+                stepTimer -= Time.deltaTime;
 
-                if (_stepTimer <= 0f)
+                if (stepTimer <= 0f)
                 {
                     PlayFootstepSound();
-                    _stepTimer = CurrentStepInterval;
+                    stepTimer = CurrentStepInterval;
                 }
             }
             else
             {
-                _stepTimer = 0f;
+                stepTimer = 0f;
             }
         }
 
@@ -341,10 +341,10 @@ namespace PlayerMovement
             do
             {
                 randomIndex = Random.Range(0, footstepClips.Length);
-            } while (footstepClips.Length > 1 && randomIndex == _lastFootstepIndex);
+            } while (footstepClips.Length > 1 && randomIndex == lastFootstepIndex);
 
             AudioClip clipToPlay = footstepClips[randomIndex];
-            _lastFootstepIndex = randomIndex;
+            lastFootstepIndex = randomIndex;
 
             footstepAudioSource.pitch = Random.Range(pitchMin, pitchMax);
             footstepAudioSource.volume = footstepVolume;
@@ -353,76 +353,76 @@ namespace PlayerMovement
 
         private void HandleMouseLook()
         {
-            if (_playerCamera == null || _lookInput == Vector2.zero || !cursorLocked) return;
+            if (playerCamera == null || lookInput == Vector2.zero || !cursorLocked) return;
 
-            transform.Rotate(Vector3.up, _lookInput.x * mouseSensitivity);
+            transform.Rotate(Vector3.up, lookInput.x * mouseSensitivity);
 
-            float verticalDelta = _lookInput.y * mouseSensitivity * (invertY ? 1 : -1);
-            _cameraPitch = Mathf.Clamp(_cameraPitch + verticalDelta, -90f, 90f);
-            _playerCamera.transform.localRotation = Quaternion.Euler(_cameraPitch, 0, 0);
+            float verticalDelta = lookInput.y * mouseSensitivity * (invertY ? 1 : -1);
+            cameraPitch = Mathf.Clamp(cameraPitch + verticalDelta, -90f, 90f);
+            playerCamera.transform.localRotation = Quaternion.Euler(cameraPitch, 0, 0);
         }
 
         private void HandleCameraBobbing()
         {
-            if (_playerCamera == null || !enableCameraBobbing) return;
+            if (playerCamera == null || !enableCameraBobbing) return;
 
-            bool isMoving = _moveInput != Vector2.zero && _isGrounded;
+            bool isMoving = moveInput != Vector2.zero && isGrounded;
 
             if (isMoving)
             {
                 // Устанавливаем скорость и амплитуду в зависимости от состояния бега
-                _currentBobbingSpeed = _isRunning ? runBobbingSpeed : walkBobbingSpeed;
-                _currentBobbingAmount = _isRunning ? runBobbingAmount : walkBobbingAmount;
+                currentBobbingSpeed = isRunning ? runBobbingSpeed : walkBobbingSpeed;
+                currentBobbingAmount = isRunning ? runBobbingAmount : walkBobbingAmount;
 
                 // Увеличиваем таймер
-                _bobbingTimer += Time.deltaTime * _currentBobbingSpeed;
+                bobbingTimer += Time.deltaTime * currentBobbingSpeed;
 
                 // Рассчитываем покачивание по синусоиде
-                float sinWave = Mathf.Sin(_bobbingTimer);
-                float cosWave = Mathf.Cos(_bobbingTimer * 0.5f);
+                float sinWave = Mathf.Sin(bobbingTimer);
+                float cosWave = Mathf.Cos(bobbingTimer * 0.5f);
 
                 // Вертикальное покачивание (вверх-вниз)
-                float verticalBob = sinWave * _currentBobbingAmount;
+                float verticalBob = sinWave * currentBobbingAmount;
 
                 // Горизонтальное покачивание (влево-вправо) - поменьше
-                float horizontalBob = cosWave * (_currentBobbingAmount * 0.3f);
+                float horizontalBob = cosWave * (currentBobbingAmount * 0.3f);
 
                 // Применяем покачивание
-                _cameraTargetPosition = _initialCameraPosition + new Vector3(horizontalBob, verticalBob, 0);
+                cameraTargetPosition = initialCameraPosition + new Vector3(horizontalBob, verticalBob, 0);
             }
             else
             {
                 // Если стоим на месте - плавно возвращаем камеру в исходное положение
-                _bobbingTimer = 0;
-                _cameraTargetPosition = _initialCameraPosition;
+                bobbingTimer = 0;
+                cameraTargetPosition = initialCameraPosition;
             }
 
             // Плавно интерполируем к целевой позиции
-            _playerCamera.transform.localPosition = Vector3.Lerp(
-                _playerCamera.transform.localPosition,
-                _cameraTargetPosition,
+            playerCamera.transform.localPosition = Vector3.Lerp(
+                playerCamera.transform.localPosition,
+                cameraTargetPosition,
                 Time.deltaTime * bobbingSmoothing
             );
         }
 
         private void HandleBreathingEffect()
         {
-            if (_playerCamera == null || !enableBreathingEffect) return;
+            if (playerCamera == null || !enableBreathingEffect) return;
 
             // Эффект легкого покачивания даже когда игрок стоит
-            _breathingTimer += Time.deltaTime * breathingSpeed;
+            breathingTimer += Time.deltaTime * breathingSpeed;
 
             // Очень легкое синусоидальное движение
-            float breathOffset = Mathf.Sin(_breathingTimer) * breathingAmount;
+            float breathOffset = Mathf.Sin(breathingTimer) * breathingAmount;
 
             // Применяем эффект дыхания только если нет активного покачивания от ходьбы
-            if (_moveInput == Vector2.zero)
+            if (moveInput == Vector2.zero)
             {
-                Vector3 breathPosition = _initialCameraPosition;
+                Vector3 breathPosition = initialCameraPosition;
                 breathPosition.y += breathOffset;
 
-                _playerCamera.transform.localPosition = Vector3.Lerp(
-                    _playerCamera.transform.localPosition,
+                playerCamera.transform.localPosition = Vector3.Lerp(
+                    playerCamera.transform.localPosition,
                     breathPosition,
                     Time.deltaTime * bobbingSmoothing * 0.5f
                 );
@@ -431,28 +431,28 @@ namespace PlayerMovement
 
         private void OnJumpPerformed(InputAction.CallbackContext context)
         {
-            if (_isGrounded)
+            if (isGrounded)
             {
-                _playerVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                playerVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
         }
 
         private void OnThrowPerformed(InputAction.CallbackContext context)
         {
-            if (!cursorLocked || Time.time < _nextThrowTime || _victoryAchieved) return;
+            if (!cursorLocked || Time.time < nextThrowTime || victoryAchieved) return;
 
-            if (!infiniteSnowballs && _currentSnowballs <= 0)
+            if (!infiniteSnowballs && currentSnowballs <= 0)
             {
                 Debug.Log("No snowballs left!");
                 return;
             }
 
             ThrowSnowball();
-            _nextThrowTime = Time.time + throwRate;
+            nextThrowTime = Time.time + throwRate;
 
             if (!infiniteSnowballs)
             {
-                _currentSnowballs--;
+                currentSnowballs--;
             }
         }
 
@@ -471,9 +471,9 @@ namespace PlayerMovement
 
         private Vector3 GetThrowDirection()
         {
-            if (_playerCamera != null)
+            if (playerCamera != null)
             {
-                return _playerCamera.transform.forward;
+                return playerCamera.transform.forward;
             }
             return transform.forward;
         }
@@ -495,10 +495,10 @@ namespace PlayerMovement
 
         private void PlayThrowSound()
         {
-            if (_throwAudioSource != null && throwSound != null)
+            if (throwAudioSource != null && throwSound != null)
             {
-                _throwAudioSource.pitch = Random.Range(0.9f, 1.1f);
-                _throwAudioSource.PlayOneShot(throwSound);
+                throwAudioSource.pitch = Random.Range(0.9f, 1.1f);
+                throwAudioSource.PlayOneShot(throwSound);
             }
         }
 
@@ -524,9 +524,9 @@ namespace PlayerMovement
 
         private void CheckAllSnowmenDestroyed()
         {
-            if (currentScore >= totalScore && totalScore > 0 && !_victoryAchieved)
+            if (currentScore >= totalScore && totalScore > 0 && !victoryAchieved)
             {
-                _victoryAchieved = true;
+                victoryAchieved = true;
                 Debug.Log("All snowmen destroyed! Showing victory menu...");
 
                 OnVictoryAchieved?.Invoke();
@@ -640,12 +640,12 @@ namespace PlayerMovement
 
         public void AddSnowballs(int amount)
         {
-            _currentSnowballs = Mathf.Min(_currentSnowballs + amount, maxSnowballs);
+            currentSnowballs = Mathf.Min(currentSnowballs + amount, maxSnowballs);
         }
 
         public int GetCurrentSnowballs()
         {
-            return _currentSnowballs;
+            return currentSnowballs;
         }
 
         public int GetCurrentScore()
@@ -667,7 +667,7 @@ namespace PlayerMovement
         {
             currentScore = 0;
             totalScore = 0;
-            _victoryAchieved = false;
+            victoryAchieved = false;
             OnScoreChanged?.Invoke(currentScore);
         }
 
@@ -681,24 +681,24 @@ namespace PlayerMovement
         {
             if (groundCheckTransform == null) return;
 
-            Gizmos.color = _isGrounded ? Color.green : Color.red;
+            Gizmos.color = isGrounded ? Color.green : Color.red;
             Gizmos.DrawWireSphere(groundCheckTransform.position, groundCheckRadius);
 
-            if (_playerCamera != null)
+            if (playerCamera != null)
             {
                 Gizmos.color = Color.cyan;
-                Gizmos.DrawRay(_playerCamera.transform.position, _playerCamera.transform.forward * 5f);
+                Gizmos.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * 5f);
             }
         }
     }
 
     public class StraightSnowball : MonoBehaviour
     {
-        private Vector3 _velocity;
-        private float _maxLifetime;
-        private float _spawnTime;
-        private bool _hasHit = false;
-        private PlayerMovement _player;
+        private Vector3 velocity;
+        private float maxLifetime;
+        private float spawnTime;
+        private bool hasHit = false;
+        private PlayerMovement player;
 
         [Header("Snowball Effects")]
         [SerializeField] private GameObject hitEffect;
@@ -714,15 +714,15 @@ namespace PlayerMovement
 
         private void Start()
         {
-            _spawnTime = Time.time;
+            spawnTime = Time.time;
             gameObject.tag = "Snowball";
         }
 
         public void Initialize(Vector3 initialVelocity, float lifetime, PlayerMovement player)
         {
-            _velocity = initialVelocity;
-            _maxLifetime = lifetime;
-            _player = player;
+            velocity = initialVelocity;
+            maxLifetime = lifetime;
+            this.player = player;
 
             if (_rb != null)
             {
@@ -733,14 +733,14 @@ namespace PlayerMovement
 
         private void Update()
         {
-            if (_hasHit) return;
+            if (hasHit) return;
 
             if (_rb == null)
             {
-                transform.position += _velocity * Time.deltaTime;
+                transform.position += velocity * Time.deltaTime;
             }
 
-            if (Time.time - _spawnTime > _maxLifetime)
+            if (Time.time - spawnTime > maxLifetime)
             {
                 Destroy(gameObject);
             }
@@ -748,15 +748,15 @@ namespace PlayerMovement
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (_hasHit) return;
+            if (hasHit) return;
 
             SnowballTarget target = collision.collider.GetComponent<SnowballTarget>();
             if (target != null)
             {
-                target.TakeDamage(1, _player);
+                target.TakeDamage(1, player);
             }
 
-            _hasHit = true;
+            hasHit = true;
 
             if (hitEffect != null)
                 Instantiate(hitEffect, collision.contacts[0].point, Quaternion.identity);
